@@ -20,10 +20,10 @@ class ViewController: UIViewController {
         return stackView
     }()
     private let textView = {
-        let t = UITextView()
-        t.text = "long \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n input...abcdef123456789"
+        let t = SelfSizingTextView()
+        t.text = "long \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n input...ab😉cd\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nf123456789"
         t.textColor = .gray
-        t.isScrollEnabled = false
+        t.isScrollEnabled = true
         t.font = .systemFont(ofSize: 30)
         t.translatesAutoresizingMaskIntoConstraints = false
         return t
@@ -62,8 +62,33 @@ class ViewController: UIViewController {
     }
 }
 
+class SelfSizingTextView: UITextView {
+    override var intrinsicContentSize: CGSize {
+        contentSize
+    }
+    
+    override func layoutSubviews() {
+        invalidateIntrinsicContentSize()
+        super.layoutSubviews()
+    }
+}
+
 extension ViewController: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
-        scrollView.layoutIfNeeded()
+        scrollView.scrollToCursor(in: textView)
+    }
+    
+}
+
+extension UIScrollView {
+    func scrollToCursor(in textView: UITextView) {
+        guard let selectedRange = textView.selectedTextRange else { return }
+        let cursorRect = textView.caretRect(for: selectedRange.start)
+        let cursorRectInScrollView = textView.convert(cursorRect, to: self)
+        let visibleRect = CGRect(x: 0, y: contentOffset.y, width: bounds.size.width, height: bounds.size.height)
+        
+        if !visibleRect.contains(cursorRectInScrollView.origin) {
+            scrollRectToVisible(cursorRectInScrollView, animated: true)
+        }
     }
 }
